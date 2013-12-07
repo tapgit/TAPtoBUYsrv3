@@ -39,9 +39,9 @@ POST	/sellings/:userId									controllers.ProductController.sellAProduct(userId
 PUT		/sellings/:userId/:productId						controllers.ProductController.updateASellingProduct(userId: Integer, productId: Integer)
 DELETE  /sellings/:userId/:productId 						controllers.ProductController.quitFromSelling(userId: Integer, productId: Integer)
 
-GET		/orders/:orderId									controllers.Application.getOrderInfo(orderId: Integer)
+GET		/orders/:userId/:productId/:orderId/:sold/:forBid	controllers.Application.getOrderInfo(userId: Integer, productId: Integer, orderId: Integer, sold: Boolean, forBid: Boolean)
 
-#GET		/buynow/:productId									controllers.ProductController.buyNow(productId: Integer)
+#GET		/buynow/:productId								controllers.ProductController.buyNow(productId: Integer)
 
 POST	/placeorder/:userId									controllers.ProductController.placeOrder(userId: Integer)
 POST	/buynow/:userId										controllers.ProductController.buyNow(userId: Integer)

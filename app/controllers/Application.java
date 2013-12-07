@@ -43,8 +43,8 @@ public class Application extends Controller {
 		return ok(index.render("Your new application is ready."));
 	}
 
+	//DONE
 	public static Result getUserActivityHistory(int userId){
-
 		try{
 			Class.forName(DBManager.driver);
 			Connection connection = DriverManager.getConnection(DBManager.db,DBManager.user,DBManager.pass);
@@ -121,14 +121,26 @@ public class Application extends Controller {
 			return notFound();
 		}
 	}
-	public static Result getOrderInfo(int orderId){
-		
-		
-		
-		
-		
-		return TODO;
-		
+	
+	//IN Progress....
+	public static Result getOrderInfo(int userId, int productId, int orderId, boolean sold, boolean forBid){
+		if(sold){//orden que vendi
+			if(forBid){
+				
+			}
+			else{
+				
+			}
+		}
+		else{//orden que compre
+			if(forBid){
+				
+			}
+			else{
+				
+			}
+		}
+		return ok("TODO");	
 	}
 	
 }
