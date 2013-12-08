@@ -18,14 +18,14 @@ public class Manager {
 	public static String pass = "postgres";
 	
 	//Image Dir (local)
-	//public static String imagesDir = "/home/cok0/git/TAPtoBUYsrv2/images/";
-	public static String imagesDir = "C:\\Users\\Kidany\\Documents\\GitHub\\git\\TAPtoBUYsrv2\\images\\";
+	//public static String imagesDir = "/home/cok0/git/TAPtoBUYsrv3/images/";
+	public static String imagesDir = "C:\\Users\\Kidany\\git\\TAPtoBUYsrv3\\images\\";
 	
 	//Image localhost url to send to the client (Android)
 	//public static String andrImgDir = "http://10.0.2.2:9000/images/";
 	//public static String andrScaledImgDir = "http://10.0.2.2:9000/images/scaled/";
 	//Image localhost url to send to the client (Android)
-	public static String andrImgDir = "taptobuy.no-ip.biz:9000/images/";
-	public static String andrScaledImgDir = "taptobuy.no-ip.biz:9000/images/scaled/";
+	public static String andrImgDir = "http://24.54.234.201:9000/images/";
+	public static String andrScaledImgDir = "http://24.54.234.201:9000/images/scaled/";
 	
 }

@@ -46,6 +46,7 @@ public class CartController extends Controller {
 			}
 			
 			respJson.put("cart", array);
+			connection.close();
 			return ok(respJson);//200
 		}
 		catch (Exception e) {

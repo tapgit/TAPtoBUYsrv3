@@ -97,6 +97,7 @@ public class BidController extends Controller {
 				array.add(itemJson);
 			}
 			respJson.put("myBiddingsItems", array);
+			connection.close();
 			return ok(respJson);//200
 		}
 		catch (Exception e) {
@@ -127,6 +128,7 @@ public class BidController extends Controller {
 			}
 		respJson.put("bidlist",array);
 		Logger.info("Product ID Bidlist:" + productId);
+		connection.close();
 		return ok(respJson);
 		}
 		catch (Exception e) {

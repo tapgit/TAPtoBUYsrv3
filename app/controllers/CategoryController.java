@@ -50,6 +50,7 @@ public class CategoryController extends Controller {
 			catJson.put("hasSubCategories", false );
 			array.add(catJson);
 			respJson.put("subcategories", array);
+			connection.close();
 			return ok(respJson);
 		} catch (Exception e) {
 			Logger.info("EXCEPTION ON CATEGORIES");

@@ -107,6 +107,7 @@ public class Application extends Controller {
 				itemJson.putPOJO("item", Json.toJson(item));
 				array.add(itemJson);
 			}
+			connection.close();
 			respJson.put("myHistory", array);
 			return ok(respJson);//200
 		}
@@ -172,6 +173,7 @@ public class Application extends Controller {
 				}
 			}
 			respJson.putPOJO("order", Json.toJson(theOrder));
+			connection.close();
 			return ok(respJson);
 		}
 		catch (Exception e) {

@@ -46,6 +46,7 @@ public class UserAccountController extends Controller {
 				if(rset.next()){
 					respJson.put("admin", true);
 					respJson.put("id", rset.getInt(1));
+					connection.close();
 					return ok(respJson);//200 (send client the userId of the user that's being signed in)
 				}
 				else{
@@ -55,9 +56,11 @@ public class UserAccountController extends Controller {
 					if(rset.next()){
 						respJson.put("admin", false);
 						respJson.put("id", rset.getInt(1));
+						connection.close();
 						return ok(respJson);//200 (send client the userId of the user that's being signed in)
 					}
 					else{
+						connection.close();
 						return unauthorized("Bad username or password");//401
 					}
 				}
@@ -157,10 +160,11 @@ public class UserAccountController extends Controller {
 					creditCards[i++] = new CreditCard(rset.getString(9), rset.getString(9), rset.getString(9), tempBillingAddress);
 				}
 				User user = new User(userId,fname, lname, username, pass, email, shippingAddresses, creditCards);
-
+				connection.close();
 				return ok(Json.toJson(user));//200 respond with user data
 			}
 			else{
+				connection.close();
 				return notFound("User not found");//404
 			}
 		}
@@ -171,7 +175,7 @@ public class UserAccountController extends Controller {
 		}
 	}
 
-	//DONE pero de debe chequiar
+	//DONE
 	public static Result getRatingList(int productId){
 		try{
 			Class.forName(Manager.driver);
@@ -198,6 +202,7 @@ public class UserAccountController extends Controller {
 				array.add(Json.toJson(rating));
 			}
 			respJson.put("ratingslist",array);
+			connection.close();
 			return ok(respJson);
 		}
 		catch (Exception e) {

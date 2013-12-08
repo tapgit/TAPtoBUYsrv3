@@ -91,6 +91,7 @@ public class SearchController extends Controller {
 				array.add(itemJson);
 			}
 			respJson.put("results", array);
+			connection.close();
 			return ok(respJson);
 		}
 		catch (Exception e) {
