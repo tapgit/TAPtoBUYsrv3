@@ -8,6 +8,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
+import man.Manager;
 import models.Address;
 import models.Bid;
 import models.Product;
@@ -24,7 +25,6 @@ import org.codehaus.jackson.node.ObjectNode;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import dbman.DBManager;
 
 
 
@@ -37,14 +37,12 @@ import play.mvc.Result;
 import testmodels.Test;
 
 public class ProductController extends Controller {
-	public static String andrImgDir = "http://10.0.2.2:9000/images/";
-	public static String andrScaledImgDir = "http://10.0.2.2:9000/images/scaled/";
 	
 	//DONE
 	public static Result getProductInfo(int productId){
 		try{
-			Class.forName(DBManager.driver);
-			Connection connection = DriverManager.getConnection(DBManager.db,DBManager.user,DBManager.pass);
+			Class.forName(Manager.driver);
+			Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
 			Statement statement = connection.createStatement();
 
 			ObjectNode itemInfoJson = Json.newObject();
@@ -69,7 +67,7 @@ public class ProductController extends Controller {
 					}
 				}
 				Product itemInfo = new ProductForSaleInfo(rset.getInt("iid"), rset.getString("ititle"), timeRemaining, rset.getDouble("ishipping_price"), 
-						andrImgDir + "img" + rset.getInt("iid") +".jpg", rset.getString("username"), rset.getDouble("avg"),rset.getInt("remaining_quantity"), rset.getDouble("instant_price"),
+						Manager.andrImgDir + "img" + rset.getInt("iid") +".jpg", rset.getString("username"), rset.getDouble("avg"),rset.getInt("remaining_quantity"), rset.getDouble("instant_price"),
 						rset.getString("product"), rset.getString("model"), rset.getString("brand"), rset.getString("dimensions"), rset.getString("description"));
 				itemInfoJson.putPOJO("productInfo", Json.toJson(itemInfo));
 				return ok(itemInfoJson);//200
@@ -90,7 +88,7 @@ public class ProductController extends Controller {
 						}
 					}
 					Product itemInfo = new ProductForAuctionInfo(rset.getInt("iid"), rset.getString("ititle"), timeRemaining, rset.getDouble("ishipping_price"), 
-							andrImgDir + "img" + rset.getInt("iid") +".jpg", rset.getString("username"), rset.getDouble("avg"), -1, rset.getDouble("current_bid_price"), 
+							Manager.andrImgDir + "img" + rset.getInt("iid") +".jpg", rset.getString("username"), rset.getDouble("avg"), -1, rset.getDouble("current_bid_price"), 
 							rset.getInt("total_bids"), rset.getString("product"), rset.getString("model"), rset.getString("brand"), rset.getString("dimensions"), rset.getString("description"));
 							itemInfoJson.putPOJO("productInfo", Json.toJson(itemInfo));		
 					return ok(itemInfoJson);//200 
@@ -110,8 +108,8 @@ public class ProductController extends Controller {
 	//DONE
 	public static Result getAllSellingProducts(int userId){
 		try{
-			Class.forName(DBManager.driver);
-			Connection connection = DriverManager.getConnection(DBManager.db,DBManager.user,DBManager.pass);
+			Class.forName(Manager.driver);
+			Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
 			Statement statement = connection.createStatement();
 			ResultSet rset = statement.executeQuery("select * " +
 													"from (select iid,ititle,ishipping_price,remaining_quantity as num1,instant_price as price,uid,false as forBid,to_char(istart_sale_date + itime_duration - current_timestamp,'DD') as days,to_char(istart_sale_date + itime_duration - current_timestamp,'HH24') as hours, " +
@@ -144,12 +142,12 @@ public class ProductController extends Controller {
 				}
 				if(!rset.getBoolean("forBid")){//for sale
 					item = new ProductForSale(rset.getInt("iid"), rset.getString("ititle"), timeRemaining, rset.getDouble("ishipping_price"), 
-							andrScaledImgDir + "img" + rset.getInt("iid") +".jpg", "", -1, rset.getInt("num1"), rset.getDouble("price"));
+							Manager.andrScaledImgDir + "img" + rset.getInt("iid") +".jpg", "", -1, rset.getInt("num1"), rset.getDouble("price"));
 					itemJson.put("forBid", false);
 				}
 				else{//for auction
 					item = new ProductForAuction(rset.getInt("iid"), rset.getString("ititle"), timeRemaining, rset.getDouble("ishipping_price"), 
-							andrScaledImgDir + "img" + rset.getInt("iid") +".jpg", "", -1, -1, rset.getDouble("price"), rset.getInt("num1"));
+							Manager.andrScaledImgDir + "img" + rset.getInt("iid") +".jpg", "", -1, -1, rset.getDouble("price"), rset.getInt("num1"));
 					itemJson.put("forBid", true);
 				}
 				itemJson.putPOJO("item", Json.toJson(item));
@@ -279,8 +277,8 @@ public class ProductController extends Controller {
 						buyNowIdsList += ")";
 					}
 					Logger.info("Received buynow ids list: " + buyNowIdsList);
-					Class.forName(DBManager.driver);
-					Connection connection = DriverManager.getConnection(DBManager.db,DBManager.user,DBManager.pass);
+					Class.forName(Manager.driver);
+					Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
 					Statement statement = connection.createStatement();
 					ResultSet rset = statement.executeQuery("select * " + 
 															"from (select iid,ititle,ishipping_price,remaining_quantity as num1,instant_price as price,false as forBid, " +
@@ -321,12 +319,12 @@ public class ProductController extends Controller {
 						}
 						if(!rset.getBoolean("forBid")){//for sale
 							item = new ProductForSale(rset.getInt("iid"), rset.getString("ititle"), timeRemaining, rset.getDouble("ishipping_price"), 
-									andrScaledImgDir + "img" + rset.getInt("iid") +".jpg",  rset.getString("username"), rset.getDouble("avg"), rset.getInt("num1"), rset.getDouble("price"));
+									Manager.andrScaledImgDir + "img" + rset.getInt("iid") +".jpg",  rset.getString("username"), rset.getDouble("avg"), rset.getInt("num1"), rset.getDouble("price"));
 							itemJson.put("forBid", false);
 						}
 						else{//for auction
 							item = new ProductForAuction(rset.getInt("iid"), rset.getString("ititle"), timeRemaining, rset.getDouble("ishipping_price"), 
-									andrScaledImgDir + "img" + rset.getInt("iid") +".jpg",  rset.getString("username"), rset.getDouble("avg"), -1, rset.getDouble("price"), rset.getInt("num1"));
+									Manager.andrScaledImgDir + "img" + rset.getInt("iid") +".jpg",  rset.getString("username"), rset.getDouble("avg"), -1, rset.getDouble("price"), rset.getInt("num1"));
 							itemJson.put("forBid", true);
 						}
 						pricesTotal+=rset.getDouble("price");

@@ -19,5 +19,4 @@ public class MyHistoryProductForSale extends MyHistoryProduct{
 		this.quantity = quantity;
 	}
 
-
 }

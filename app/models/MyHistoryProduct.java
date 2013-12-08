@@ -7,10 +7,11 @@ public class MyHistoryProduct {
 	private double paidPrice;
 	private double paidShippingPrice;
 	private String imgLink;
-	private String sellerUsername;
+	private String sellerUsername;//nota:el sellername aqui puede ser el buyer username tambien
 	private double sellerRate;
+	
 	public MyHistoryProduct(int id, int order_id, String title,
-			double paidPrice, double paidShippingPrice, String imgLink,
+			double paidPrice, double paidShippingPrice, String imgLink, 
 			String sellerUsername, double sellerRate) {
 		super();
 		this.id = id;

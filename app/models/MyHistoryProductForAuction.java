@@ -1,6 +1,5 @@
 package models;
 
-
 public class MyHistoryProductForAuction extends MyHistoryProduct {
 	private int bidsAmount;
 
@@ -20,6 +19,4 @@ public class MyHistoryProductForAuction extends MyHistoryProduct {
 		this.bidsAmount = bidsAmount;
 	}
 
-	
-	
 }

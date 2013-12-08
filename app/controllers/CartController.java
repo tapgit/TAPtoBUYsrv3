@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 
+import man.Manager;
 import models.Product;
 import models.ProductForSale;
 
@@ -13,7 +14,6 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 
-import dbman.DBManager;
 
 import play.Logger;
 import play.libs.Json;
@@ -23,12 +23,11 @@ import testmodels.Test;
 
 public class CartController extends Controller {
 
-	public static String andrScaledImgDir = "http://10.0.2.2:9000/images/scaled/";
 	//DONE
 	public static Result getCartItems(int userId){	
 		try{
-			Class.forName(DBManager.driver);
-			Connection connection = DriverManager.getConnection(DBManager.db,DBManager.user,DBManager.pass);
+			Class.forName(Manager.driver);
+			Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
 			Statement statement = connection.createStatement();
 			ObjectNode respJson = Json.newObject();
 			ArrayNode array = respJson.arrayNode();
@@ -41,7 +40,7 @@ public class CartController extends Controller {
 			while(rset.next()){
 				itemJson = Json.newObject();
 				item = new ProductForSale(rset.getInt("iid"), rset.getString("ititle"), null, rset.getDouble("ishipping_price"), 
-						andrScaledImgDir + "img" + rset.getInt("iid") +".jpg", rset.getString("username"), rset.getDouble("avg"), -1, rset.getDouble("instant_price"));
+						Manager.andrScaledImgDir + "img" + rset.getInt("iid") +".jpg", rset.getString("username"), rset.getDouble("avg"), -1, rset.getDouble("instant_price"));
 				itemJson.putPOJO("item", Json.toJson(item));
 				array.add(itemJson);
 			}

@@ -9,8 +9,6 @@ POST 	/login												controllers.UserAccountController.checkLogin()
 
 POST 	/register											controllers.UserAccountController.register()
 
-GET /db controllers.Application.testdb()
-
 #View, delete and modify user accounts
 GET		/user/:userId										controllers.UserAccountController.getUserAccountInfo(userId: Integer)
 PUT		/user/:userId										controllers.UserAccountController.updateUserAccount(userId: Integer)
@@ -39,7 +37,7 @@ POST	/sellings/:userId									controllers.ProductController.sellAProduct(userId
 PUT		/sellings/:userId/:productId						controllers.ProductController.updateASellingProduct(userId: Integer, productId: Integer)
 DELETE  /sellings/:userId/:productId 						controllers.ProductController.quitFromSelling(userId: Integer, productId: Integer)
 
-GET		/orders/:userId/:productId/:orderId/:sold/:forBid	controllers.Application.getOrderInfo(userId: Integer, productId: Integer, orderId: Integer, sold: Boolean, forBid: Boolean)
+GET		/orders/:orderId/:forBid/:sold						controllers.Application.getOrderInfo(orderId: Integer, forBid: Boolean, sold: Boolean)
 
 #GET		/buynow/:productId								controllers.ProductController.buyNow(productId: Integer)
 

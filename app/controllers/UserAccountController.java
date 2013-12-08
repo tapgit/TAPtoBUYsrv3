@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
+import man.Manager;
 import models.Address;
 import models.CreditCard;
 import models.Rating;
@@ -14,7 +15,6 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 
-import dbman.DBManager;
 
 import play.Logger;
 import play.libs.Json;
@@ -32,8 +32,8 @@ public class UserAccountController extends Controller {
 		} 
 		else {
 			try{
-				Class.forName(DBManager.driver);
-				Connection connection = DriverManager.getConnection(DBManager.db,DBManager.user,DBManager.pass);
+				Class.forName(Manager.driver);
+				Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
 				Statement statement = connection.createStatement();
 
 				String username = json.findPath("username").getTextValue();//json.get("username").getTextValue();
@@ -114,8 +114,8 @@ public class UserAccountController extends Controller {
 	//DONE
 	public static Result getUserAccountInfo(int userId){
 		try{
-			Class.forName(DBManager.driver);
-			Connection connection = DriverManager.getConnection(DBManager.db,DBManager.user,DBManager.pass);
+			Class.forName(Manager.driver);
+			Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
 			Statement statement = connection.createStatement();
 
 			//Get user info
@@ -174,8 +174,8 @@ public class UserAccountController extends Controller {
 	//DONE pero de debe chequiar
 	public static Result getRatingList(int productId){
 		try{
-			Class.forName(DBManager.driver);
-			Connection connection = DriverManager.getConnection(DBManager.db,DBManager.user,DBManager.pass);
+			Class.forName(Manager.driver);
+			Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
 			Statement statement = connection.createStatement();
 			ResultSet rset = statement.executeQuery("select username, stars " +
 					"from item_for_sale natural join ranks as rnk(b_uid,uid,stars),users " +
@@ -217,10 +217,8 @@ public class UserAccountController extends Controller {
 		}
 		else{
 
-
-
-
-
+			
+			
 			Logger.info(json.toString());
 			return ok("User account has been updated");//200
 		}

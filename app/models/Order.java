@@ -1,26 +1,21 @@
 package models;
 
+import java.util.ArrayList;
+
 public class Order {
 	private int id;
-	private int date;
-	private String sellerUsername;
-	private String buyerUsername;
-	private Address shippingAddress;
-	private CreditCard creditCard;
-	private String paypalEmail;
+	private String date;
+	private String shippingAddressStr;
+	private String paymentMethod; //CreditCard for purchased order & Paypal email for sold order
 	private double paidPrice;
 	private double shippingPrice;
-	public Order(int id, int date, String sellerUsername, String buyerUsername,
-			Address shippingAddress, CreditCard creditCard, String paypalEmail,
-			double paidPrice, double shippingPrice) {
+	public Order(int id, String date, String shippingAddressStr,
+			String paymentMethod, double paidPrice, double shippingPrice) {
 		super();
 		this.id = id;
 		this.date = date;
-		this.sellerUsername = sellerUsername;
-		this.buyerUsername = buyerUsername;
-		this.shippingAddress = shippingAddress;
-		this.creditCard = creditCard;
-		this.paypalEmail = paypalEmail;
+		this.shippingAddressStr = shippingAddressStr;
+		this.paymentMethod = paymentMethod;
 		this.paidPrice = paidPrice;
 		this.shippingPrice = shippingPrice;
 	}
@@ -30,41 +25,23 @@ public class Order {
 	public void setId(int id) {
 		this.id = id;
 	}
-	public int getDate() {
+	public String getDate() {
 		return date;
 	}
-	public void setDate(int date) {
+	public void setDate(String date) {
 		this.date = date;
 	}
-	public String getSellerUsername() {
-		return sellerUsername;
+	public String getShippingAddressStr() {
+		return shippingAddressStr;
 	}
-	public void setSellerUsername(String sellerUsername) {
-		this.sellerUsername = sellerUsername;
+	public void setShippingAddressStr(String shippingAddressStr) {
+		this.shippingAddressStr = shippingAddressStr;
 	}
-	public String getBuyerUsername() {
-		return buyerUsername;
+	public String getPaymentMethod() {
+		return paymentMethod;
 	}
-	public void setBuyerUsername(String buyerUsername) {
-		this.buyerUsername = buyerUsername;
-	}
-	public Address getShippingAddress() {
-		return shippingAddress;
-	}
-	public void setShippingAddress(Address shippingAddress) {
-		this.shippingAddress = shippingAddress;
-	}
-	public CreditCard getCreditCard() {
-		return creditCard;
-	}
-	public void setCreditCard(CreditCard creditCard) {
-		this.creditCard = creditCard;
-	}
-	public String getPaypalEmail() {
-		return paypalEmail;
-	}
-	public void setPaypalEmail(String paypalEmail) {
-		this.paypalEmail = paypalEmail;
+	public void setPaymentMethod(String paymentMethod) {
+		this.paymentMethod = paymentMethod;
 	}
 	public double getPaidPrice() {
 		return paidPrice;

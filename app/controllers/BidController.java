@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 
+import man.Manager;
 import models.Bid;
 import models.MyBiddingsProduct;
 import models.Product;
@@ -16,7 +17,6 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 
-import dbman.DBManager;
 
 import play.Logger;
 import play.libs.Json;
@@ -25,7 +25,6 @@ import play.mvc.Result;
 import testmodels.Test;
 
 public class BidController extends Controller {
-	public static String andrScaledImgDir = "http://10.0.2.2:9000/images/scaled/";
 	
 	public static Result placeBid(){
 //		ArrayList<Product> allItems = Test.getProductList();
@@ -62,8 +61,8 @@ public class BidController extends Controller {
 	//DONE
 	public static Result getMyBiddings(int userId){
 		try{
-			Class.forName(DBManager.driver);
-			Connection connection = DriverManager.getConnection(DBManager.db,DBManager.user,DBManager.pass);
+			Class.forName(Manager.driver);
+			Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
 			Statement statement = connection.createStatement();
 			ResultSet rset = statement.executeQuery("select iid,ititle,ishipping_price,total_bids,current_bid_price,winningbid, " +
 													"to_char(istart_sale_date + itime_duration - current_timestamp,'DD') as days,to_char(istart_sale_date + itime_duration - current_timestamp,'HH24') as hours, " + 
@@ -91,7 +90,7 @@ public class BidController extends Controller {
 					}
 				}
 				item = new MyBiddingsProduct(rset.getInt("iid"), rset.getString("ititle"), timeRemaining, rset.getDouble("ishipping_price"), 
-						andrScaledImgDir + "img" + rset.getInt("iid") +".jpg", rset.getString("username"), rset.getDouble("avg"), 
+						Manager.andrScaledImgDir + "img" + rset.getInt("iid") +".jpg", rset.getString("username"), rset.getDouble("avg"), 
 						-1, rset.getDouble("current_bid_price"), rset.getInt("total_bids"),rset.getBoolean("winningbid"));
 				
 				itemJson.putPOJO("item", Json.toJson(item));
@@ -110,8 +109,8 @@ public class BidController extends Controller {
 	//DONE
 	public static Result getBidList(int productId){
 		try{
-			Class.forName(DBManager.driver);
-			Connection connection = DriverManager.getConnection(DBManager.db,DBManager.user,DBManager.pass);
+			Class.forName(Manager.driver);
+			Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
 			Statement statement = connection.createStatement();
 			ResultSet rset = statement.executeQuery("select username, bid_amount " +
 													"from bid natural join users " +

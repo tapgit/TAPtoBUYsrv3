@@ -3,6 +3,8 @@ package controllers;
 import java.io.File;
 import java.io.FileNotFoundException;
 
+import man.Manager;
+
 import play.Logger;
 import play.mvc.Controller;
 import play.mvc.Http.MultipartFormData;
@@ -13,7 +15,7 @@ import testmodels.Test;
 public class ImageController  extends Controller{
 	public static Result getImage(String imageName){
 		try{	
-		return ok(new File(Test.imagesDir + imageName));//200
+		return ok(new File(Manager.imagesDir + imageName));//200
 		}
 		catch(Exception e){
 			Logger.info(imageName + " not found");
@@ -23,7 +25,7 @@ public class ImageController  extends Controller{
 
 	public static Result getScaledImage(String imageName){
 		try{
-			return ok(new File(Test.imagesDir + "scaled/" + imageName));//200
+			return ok(new File(Manager.imagesDir + "scaled/" + imageName));//200
 		}
 		catch(Exception e){
 			Logger.info(imageName + " not found");
@@ -39,7 +41,7 @@ public class ImageController  extends Controller{
 		    String fileName = picture.getFilename();
 		    String contentType = picture.getContentType(); 
 		    File file = picture.getFile();
-	        file.renameTo(new File(Test.imagesDir, "uploadedImageTest.jpg"));
+	        file.renameTo(new File(Manager.imagesDir, "uploadedImageTest.jpg"));
 
 		    return ok("File uploaded");
 		  } else {

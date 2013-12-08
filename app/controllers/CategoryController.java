@@ -5,10 +5,11 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
+import man.Manager;
+
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 
-import dbman.DBManager;
 
 import play.Logger;
 import play.libs.Json;
@@ -20,8 +21,8 @@ public class CategoryController extends Controller {
 	//DONE
 	public static Result getSubcategories(int parentCatId){
 		try {
-			Class.forName(DBManager.driver);
-			Connection connection = DriverManager.getConnection(DBManager.db,DBManager.user,DBManager.pass);
+			Class.forName(Manager.driver);
+			Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
 			Statement statement = connection.createStatement();
 			ObjectNode respJson = Json.newObject();
 			ArrayNode array = respJson.arrayNode();
