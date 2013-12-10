@@ -10,7 +10,6 @@ import play.mvc.Controller;
 import play.mvc.Http.MultipartFormData;
 import play.mvc.Http.MultipartFormData.FilePart;
 import play.mvc.Result;
-import testmodels.Test;
 
 public class ImageController  extends Controller{
 	public static Result getImage(String imageName){

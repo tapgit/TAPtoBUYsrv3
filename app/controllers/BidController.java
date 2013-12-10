@@ -22,7 +22,6 @@ import play.Logger;
 import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
-import testmodels.Test;
 
 public class BidController extends Controller {
 	
