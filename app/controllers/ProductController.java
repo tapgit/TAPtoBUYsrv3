@@ -39,6 +39,7 @@ import testmodels.Test;
 public class ProductController extends Controller {
 
 	//DONE
+	@SuppressWarnings("resource")
 	public static Result getProductInfo(int productId){
 		try{
 			Class.forName(Manager.driver);

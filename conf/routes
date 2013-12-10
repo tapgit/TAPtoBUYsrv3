@@ -14,7 +14,7 @@ GET		/user/:userId										controllers.UserAccountController.getUserAccountInfo
 PUT		/user/:userId										controllers.UserAccountController.updateUserAccount(userId: Integer)
 #for admin
 DELETE  /user/:userId										controllers.UserAccountController.deleteUserAccount(userId: Integer)
-
+GET		/report/:startDate/:endDate							controllers.Application.getAdminReport(startDate: String, endDate: String)
 
 GET		/subcategoriesof/:parentCatId						controllers.CategoryController.getSubcategories(parentCatId: Integer)
 
@@ -39,7 +39,7 @@ DELETE  /sellings/:userId/:productId 						controllers.ProductController.quitFro
 
 GET		/orders/:orderId/:forBid/:sold						controllers.Application.getOrderInfo(orderId: Integer, forBid: Boolean, sold: Boolean)
 
-#GET		/buynow/:productId								controllers.ProductController.buyNow(productId: Integer)
+#GET	/buynow/:productId								controllers.ProductController.buyNow(productId: Integer)
 
 POST	/placeorder/:userId									controllers.ProductController.placeOrder(userId: Integer)
 POST	/buynow/:userId										controllers.ProductController.buyNow(userId: Integer)
