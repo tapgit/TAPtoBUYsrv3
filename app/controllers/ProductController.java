@@ -1,5 +1,9 @@
 package controllers;
 
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -7,6 +11,8 @@ import java.sql.Statement;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.imageio.ImageIO;
 
 import man.Manager;
 import models.Address;
@@ -25,6 +31,8 @@ import org.codehaus.jackson.node.ObjectNode;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.google.common.io.Files;
+
 
 
 
@@ -37,6 +45,8 @@ import play.mvc.Result;
 
 public class ProductController extends Controller {
 
+	private static final int IMG_HEIGHT = 102;
+	private static final int IMG_WIDTH = 90;
 	//DONE
 	public static Result getProductInfo(int productId){
 		try{
@@ -55,7 +65,7 @@ public class ProductController extends Controller {
 				rset = statement.executeQuery("select iid,ititle,ishipping_price, username,avg(stars),remaining_quantity,instant_price,product,model,brand,dimensions,description, " +
 						"to_char(istart_sale_date + itime_duration - current_timestamp,'DD') as days,to_char(istart_sale_date + itime_duration - current_timestamp,'HH24') as hours, " +
 						"to_char(istart_sale_date + itime_duration - current_timestamp,'MI') as minutes, to_char(istart_sale_date + itime_duration - current_timestamp,'SS') as seconds " +
-						"from item natural join item_for_sale natural join item_info natural join users natural join ranks as rnk(b_uid,uid,stars) " +
+						"from item natural join item_for_sale natural join item_info natural join users natural left outer join ranks as rnk(b_uid,uid,stars) " +
 						"where iid = " + productId + " " +
 						"group by iid,ititle,ishipping_price,username,remaining_quantity,instant_price,product,model,brand,dimensions,description;");
 				rset.next();
@@ -77,7 +87,7 @@ public class ProductController extends Controller {
 				rset = statement.executeQuery("select iid,ititle,ishipping_price, username,avg(stars),total_bids,current_bid_price,product,model,brand,dimensions,description, " +
 						"to_char(istart_sale_date + itime_duration - current_timestamp,'DD') as days,to_char(istart_sale_date + itime_duration - current_timestamp,'HH24') as hours, " +
 						"to_char(istart_sale_date + itime_duration - current_timestamp,'MI') as minutes, to_char(istart_sale_date + itime_duration - current_timestamp,'SS') as seconds " +
-						"from item natural join item_for_auction natural join item_info natural join users natural join ranks as rnk(b_uid,uid,stars) " +
+						"from item natural join item_for_auction natural join item_info natural join users natural left outer join ranks as rnk(b_uid,uid,stars) " +
 						"where iid = " + productId + " " +
 						"group by iid,ititle,ishipping_price,username,total_bids,current_bid_price,product,model,brand,dimensions,description;");
 				if(rset.next()){
@@ -171,52 +181,68 @@ public class ProductController extends Controller {
 			return badRequest("Expecting Json data");//400
 		} 
 		else {
-			//			if(userId !=16){
-			//				return notFound("User not found");//404
-			//			}
-			//			else{
-			Product theItem = null;
-			JsonNode productInfoJson = json.get("productInfo");
-			if(json.get("forBid").getBooleanValue()){
-				theItem = new ProductForAuctionInfo(-1, productInfoJson.get("title").getTextValue(),
-						productInfoJson.get("timeRemaining").getTextValue(), productInfoJson.get("shippingPrice").getDoubleValue(),
-						productInfoJson.get("imgLink").getTextValue(), null, -1,  productInfoJson.get("startinBidPrice").getDoubleValue(),  
-						productInfoJson.get("currentBidPrice").getDoubleValue(),  productInfoJson.get("totalBids").getIntValue(),
-						productInfoJson.get("product").getTextValue(),productInfoJson.get("model").getTextValue(),
-						productInfoJson.get("brand").getTextValue(),productInfoJson.get("dimensions").getTextValue(),
-						productInfoJson.get("description").getTextValue());
-			}
-			else{
-				theItem = new ProductForSaleInfo(-1, productInfoJson.get("title").getTextValue(), 
-						productInfoJson.get("timeRemaining").getTextValue(), productInfoJson.get("shippingPrice").getDoubleValue(),
-						productInfoJson.get("imgLink").getTextValue(), null, -1, productInfoJson.get("remainingQuantity").getIntValue(), 
-						productInfoJson.get("instantPrice").getDoubleValue(),
-						productInfoJson.get("product").getTextValue(),productInfoJson.get("model").getTextValue(),
-						productInfoJson.get("brand").getTextValue(),productInfoJson.get("dimensions").getTextValue(),
-						productInfoJson.get("description").getTextValue());
-			}
-			//calculate an id for the item (current id is -1 (not assigned)) 
-			//and then add it to the db
-			theItem.setId(0);
+			try{
+				Class.forName(Manager.driver);
+				Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
+				Statement statement = connection.createStatement();
+				//Get item Info
+				String product = json.get("product").getTextValue().toString();
+				String model = json.get("model").getTextValue().toString();
+				String brand = json.get("brand").getTextValue().toString();
+				String dimensions = json.get("dimensions").getTextValue().toString();
+				String description = json.get("description").getTextValue().toString();
 
-			return ok();//200 (product is now on sale)
+				ResultSet rset = statement.executeQuery("insert into item_info(iInfo_id,product,model,brand,dimensions,description) " +
+						"values (DEFAULT,'" + product + "','" + model + "','" + brand + "','" + dimensions + "','"+ description + "') " +
+						"returning iInfo_id;");
+				rset.next();
+				int last_iInfo_id = rset.getInt("iInfo_id");
+				int last_iId;
+				if(json.get("id").getIntValue() == -1){//Auction item
+					rset = statement.executeQuery("insert into item(iId,iTitle,starting_quantity,remaining_quantity,iStart_sale_date,iTime_duration,iShipping_price,iInfo_id,cat_id) " +
+							"values (DEFAULT,'" + json.get("title").getTextValue().toString() + "',1,1,current_timestamp, interval '" +json.get("timeRemaining").getTextValue().toString() +" day'," + json.get("shippingPrice").getDoubleValue() + ","+ last_iInfo_id + ",0) " +
+							"returning iId;");
+					rset.next();
+					last_iId = rset.getInt("iId");
+					statement.executeUpdate("insert into item_for_auction(iId,starting_bid_price,current_bid_price,total_bids,bid_rate,uId) " +
+							"values ("+ last_iId + "," + json.get("startinBidPrice").getDoubleValue() + ","+json.get("currentBidPrice").getDoubleValue()+",0,0.2,"+userId+");");
+				}
+				else{//item for sale
+					rset = statement.executeQuery("insert into item(iId,iTitle,starting_quantity,remaining_quantity,iStart_sale_date,iTime_duration,iShipping_price,iInfo_id,cat_id) " +
+							"values (DEFAULT,'" + json.get("title").getTextValue().toString() + "',"+json.get("remainingQuantity").getIntValue()+","+json.get("remainingQuantity").getIntValue()+",current_timestamp, interval '" +json.get("timeRemaining").getTextValue().toString() +" day'," + json.get("shippingPrice").getDoubleValue() + ","+ last_iInfo_id + ",0) " +
+							"returning iId;");
+					rset.next();
+					last_iId = rset.getInt("iId");
+					statement.executeUpdate("insert into item_for_sale(iId,instant_price,uId) " +
+							"values ("+last_iId+ ","+ json.get("instantPrice").getDoubleValue() +"," + userId + ");");
+				}
+				//Rename uploaded image so that in can be linked to the new item
+				try{
+					File image = new File(Manager.imagesDir, "tmp_u" + userId +".jpg");
+					Files.copy(image, new File(Manager.imagesScaledDir, "img" + last_iId +".jpg"));
+					image.renameTo(new File(Manager.imagesDir, "img" + last_iId +".jpg"));
+				}catch(IOException e){
+					Logger.info("EXCEPTION ON SELL PRODUCT (images)");
+					e.printStackTrace();
+					return notFound();
+				}
+				connection.close();
+				return ok();//200 (product is now on sale)
+			}
+			catch (Exception e) {
+				Logger.info("EXCEPTION ON SELL PRODUCT");
+				e.printStackTrace();
+				return notFound();
+			}
 		}
-
-		//		}
 	}
+	
 	public static Result updateASellingProduct(int userId, int productId){
 		JsonNode json = request().body().asJson();
 		if(json == null) {
 			return badRequest("Expecting Json data");//400
 		} 
 		else {
-			//			if(userId != 16){
-			//				return notFound("User not found");//404
-			//			}
-			//			else if(!(productId >=0 && productId < 6)){
-			//				return notFound("Product not found");//404
-			//			}
-			//			else{
 			Product theItem = null;
 			JsonNode productInfoJson = json.get("productInfo");
 			if(json.get("forBid").getBooleanValue()){
@@ -288,7 +314,7 @@ public class ProductController extends Controller {
 						"to_char(istart_sale_date + itime_duration - current_timestamp,'DD') as days,to_char(istart_sale_date + itime_duration - current_timestamp,'HH24') as hours, " +
 						"to_char(istart_sale_date + itime_duration - current_timestamp,'MI') as minutes, to_char(istart_sale_date + itime_duration - current_timestamp,'SS') as seconds, " +
 						"username,avg(stars) " +
-						"from item natural join item_for_sale natural join users natural join ranks as rnk(b_uid,uid,stars) " +
+						"from item natural join item_for_sale natural join users natural left outer join ranks as rnk(b_uid,uid,stars) " +
 						"where item_for_sale.iid in " + buyNowIdsList + " " +
 						"group by iid,ititle,ishipping_price,remaining_quantity,instant_price,username " +
 						"union " +
@@ -296,7 +322,7 @@ public class ProductController extends Controller {
 						"to_char(istart_sale_date + itime_duration - current_timestamp,'DD') as days,to_char(istart_sale_date + itime_duration - current_timestamp,'HH24') as hours, " +
 						"to_char(istart_sale_date + itime_duration - current_timestamp,'MI') as minutes, to_char(istart_sale_date + itime_duration - current_timestamp,'SS') as seconds, " +
 						"username,avg(stars) " +
-						"from item natural join item_for_auction natural join users natural join ranks as rnk(b_uid,uid,stars) " +
+						"from item natural join item_for_auction natural join users natural left outer join ranks as rnk(b_uid,uid,stars) " +
 						"where item_for_auction.iid in " + buyNowIdsList + " " +
 						"group by iid,ititle,ishipping_price,total_bids,current_bid_price,username) as results;");
 

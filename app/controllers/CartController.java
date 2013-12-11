@@ -33,7 +33,7 @@ public class CartController extends Controller {
 			ObjectNode itemJson = null;
 			ProductForSale item = null;
 			ResultSet rset = statement.executeQuery("select iid,ititle,instant_price,ishipping_price,username,avg(stars) " +
-													"from item natural join item_for_sale natural join users natural join ranks as rnk(b_uid,uid,stars) " +
+													"from item natural join item_for_sale natural join users natural left outer join ranks as rnk(b_uid,uid,stars) " +
 													"where iid in (select iid from user_cart_item where uid = " + userId + ") " + 
 													"group by iid,ititle,instant_price,ishipping_price,username;"); 
 			while(rset.next()){

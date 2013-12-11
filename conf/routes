@@ -24,7 +24,7 @@ GET		/search/:catId/:orderById/:searchString  			controllers.SearchController.ge
 
 GET		/images/:imageName									controllers.ImageController.getImage(imageName: String)
 GET		/images/scaled/:imageName							controllers.ImageController.getScaledImage(imageName: String)
-POST    /images         									controllers.ImageController.uploadImage()
+POST    /images/:userId         							controllers.ImageController.uploadImage(userId: Integer)
 
 GET 	/cart/:userId										controllers.CartController.getCartItems(userId: Integer)
 POST	/cart/:userId/:productId							controllers.CartController.addItemToCart(userId: Integer, productId: Integer)
