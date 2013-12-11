@@ -67,7 +67,7 @@ public class BidController extends Controller {
 													"to_char(istart_sale_date + itime_duration - current_timestamp,'DD') as days,to_char(istart_sale_date + itime_duration - current_timestamp,'HH24') as hours, " + 
 													"to_char(istart_sale_date + itime_duration - current_timestamp,'MI') as minutes, to_char(istart_sale_date + itime_duration - current_timestamp,'SS') as seconds, " +
 													"username,avg(stars) " +
-													"from item natural join item_for_auction natural join users natural join ranks as rnk(b_uid,uid,stars) join bid using(iid) " +
+													"from item natural join item_for_auction natural join users natural left outer join ranks as rnk(b_uid,uid,stars) join bid using(iid) " +
 													"where bid.uid = " + userId + " " +
 													"group by iid,ititle,ishipping_price,total_bids,current_bid_price,winningbid,username;");
 			

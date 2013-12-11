@@ -49,13 +49,13 @@ public class SearchController extends Controller {
 					"from (select iid,ititle,ishipping_price,-1 as total_bids,instant_price as price,brand,cat_id,to_char(istart_sale_date + itime_duration - current_timestamp,'DD') as days,to_char(istart_sale_date + itime_duration - current_timestamp,'HH24') as hours, " +
 					"to_char(istart_sale_date + itime_duration - current_timestamp,'MI') as minutes, to_char(istart_sale_date + itime_duration - current_timestamp,'SS') as seconds, " + 
 					"username,avg(stars) " +
-					"from item natural join item_for_sale natural join item_info natural join users natural join ranks as rnk(b_uid,uid,stars) " +
+					"from item natural join item_for_sale natural join item_info natural join users natural left outer join ranks as rnk(b_uid,uid,stars) " +
 					"group by iid,ititle,ishipping_price,instant_price,brand,cat_id,username " + 
 					"union " + 
 					"select iid,ititle,ishipping_price,total_bids,current_bid_price as price,brand,cat_id,to_char(istart_sale_date + itime_duration - current_timestamp,'DD') as days,to_char(istart_sale_date + itime_duration - current_timestamp,'HH24') as hours, " +
 					"to_char(istart_sale_date + itime_duration - current_timestamp,'MI') as minutes, to_char(istart_sale_date + itime_duration - current_timestamp,'SS') as seconds, " +
 					"username,avg(stars) " +
-					"from item natural join item_for_auction natural join item_info natural join users natural join ranks as rnk(b_uid,uid,stars) " +
+					"from item natural join item_for_auction natural join item_info natural join users natural left outer join ranks as rnk(b_uid,uid,stars) " +
 					"group by iid,ititle,ishipping_price,total_bids,current_bid_price,brand,cat_id,username) as results " +
 					whereClause +  
 					"order by results." + orderByStr + ";");

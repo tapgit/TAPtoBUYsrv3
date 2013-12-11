@@ -24,7 +24,7 @@ public class ImageController  extends Controller{
 
 	public static Result getScaledImage(String imageName){
 		try{
-			return ok(new File(Manager.imagesDir + "scaled/" + imageName));//200
+			return ok(new File(Manager.imagesScaledDir + imageName));//200
 		}
 		catch(Exception e){
 			Logger.info(imageName + " not found");
@@ -32,16 +32,13 @@ public class ImageController  extends Controller{
 		}
 	}
 
-	public static Result uploadImage(){
+	public static Result uploadImage(int userId){
 		//File file = request().body().asRaw().asFile();
 		  MultipartFormData body = request().body().asMultipartFormData();
 		  FilePart picture = body.getFile("picture");
 		  if (picture != null) {
-		    String fileName = picture.getFilename();
-		    String contentType = picture.getContentType(); 
 		    File file = picture.getFile();
-	        file.renameTo(new File(Manager.imagesDir, "uploadedImageTest.jpg"));
-
+	        file.renameTo(new File(Manager.imagesDir, "tmp_u" + userId +".jpg"));
 		    return ok("File uploaded");
 		  } else {
 

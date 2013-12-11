@@ -10,9 +10,12 @@ public class User {
 	
 	private Address[] shipping_addresses;
 	private CreditCard[] credit_cards;
+	
+	private String payEmail;
+
 	public User(int id, String firstname, String lastname, String username,
 			String password, String email, Address[] shipping_addresses,
-			CreditCard[] credit_cards) {
+			CreditCard[] credit_cards, String payEmail) {
 		super();
 		this.id = id;
 		this.firstname = firstname;
@@ -22,56 +25,79 @@ public class User {
 		this.email = email;
 		this.shipping_addresses = shipping_addresses;
 		this.credit_cards = credit_cards;
+		this.payEmail = payEmail;
 	}
+
 	public int getId() {
 		return id;
 	}
+
 	public void setId(int id) {
 		this.id = id;
 	}
+
 	public String getFirstname() {
 		return firstname;
 	}
+
 	public void setFirstname(String firstname) {
 		this.firstname = firstname;
 	}
+
 	public String getLastname() {
 		return lastname;
 	}
+
 	public void setLastname(String lastname) {
 		this.lastname = lastname;
 	}
+
 	public String getUsername() {
 		return username;
 	}
+
 	public void setUsername(String username) {
 		this.username = username;
 	}
+
 	public String getPassword() {
 		return password;
 	}
+
 	public void setPassword(String password) {
 		this.password = password;
 	}
+
 	public String getEmail() {
 		return email;
 	}
+
 	public void setEmail(String email) {
 		this.email = email;
 	}
+
 	public Address[] getShipping_addresses() {
 		return shipping_addresses;
 	}
+
 	public void setShipping_addresses(Address[] shipping_addresses) {
 		this.shipping_addresses = shipping_addresses;
 	}
+
 	public CreditCard[] getCredit_cards() {
 		return credit_cards;
 	}
+
 	public void setCredit_cards(CreditCard[] credit_cards) {
 		this.credit_cards = credit_cards;
 	}
-	
-	
+
+	public String getPayEmail() {
+		return payEmail;
+	}
+
+	public void setPayEmail(String payEmail) {
+		this.payEmail = payEmail;
+	}
 	
 }
