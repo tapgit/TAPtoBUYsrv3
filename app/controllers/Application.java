@@ -206,8 +206,7 @@ public class Application extends Controller {
 				reportProduct = Json.newObject();
 				reportProduct.put("product", rset.getString("product"));
 				reportProduct.put("soldAmount", rset.getString("productQuantity"));
-				reportProduct.put("revenue", "$"+ new DecimalFormat("##.##").format(rset.getDouble("productRevenue")));				
-				
+				reportProduct.put("revenue", "$ "+ new DecimalFormat("##.##").format(rset.getDouble("productRevenue")));				
 				array.add(reportProduct);
 			}
 		respJson.put("reports",array);
