@@ -48,6 +48,7 @@ public class ProductController extends Controller {
 	private static final int IMG_HEIGHT = 102;
 	private static final int IMG_WIDTH = 90;
 	//DONE
+	@SuppressWarnings("resource")
 	public static Result getProductInfo(int productId){
 		try{
 			Class.forName(Manager.driver);

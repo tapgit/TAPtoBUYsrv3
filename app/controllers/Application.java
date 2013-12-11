@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 import man.Manager;
@@ -177,6 +178,45 @@ public class Application extends Controller {
 		}
 		catch (Exception e) {
 			Logger.info("EXCEPTION ON ORDER RECEIPT");
+			e.printStackTrace();
+			return notFound();
+		}
+	}
+	
+	public static Result getAdminReport(String startDate, String endDate){
+			
+		try{
+			Class.forName(Manager.driver);
+			Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
+			Statement statement = connection.createStatement();
+			ResultSet rset = statement.executeQuery("select orderDate,product,sum(items_price) as productRevenue,sum(quantity) as productQuantity "+
+														"from (select product, items_price, quantity, buynow_order_date as orderDate "+
+																"from buynow_order_items natural join buynow_order natural join item natural join item_info "+
+																"union all "+
+																"select product, item_finalprice as items_price, 1 as quantity, auc_order_date as orderDate "+
+																"from (select product, item_finalprice, auc_order_date from auction_order natural join item natural join item_info) as auctionReports) "+	
+															    "as productsReport "+
+															    "where orderdate between '"+startDate+"' and '"+endDate+"' "+
+															    "group by product, orderDate");
+			ObjectNode reportProduct = null;
+			ObjectNode respJson = Json.newObject();
+			ArrayNode array = respJson.arrayNode();
+			
+			while(rset.next()){
+				reportProduct = Json.newObject();
+				reportProduct.put("product", rset.getString("product"));
+				reportProduct.put("soldAmount", rset.getString("productQuantity"));
+				reportProduct.put("revenue", "$"+ new DecimalFormat("##.##").format(rset.getDouble("productRevenue")));				
+				
+				array.add(reportProduct);
+			}
+		respJson.put("reports",array);
+		Logger.info("Product report dates between: " + startDate+" / "+endDate);
+		connection.close();
+		return ok(respJson);
+		}
+		catch (Exception e) {
+			Logger.info("EXCEPTION ON ADMIN REPORT");
 			e.printStackTrace();
 			return notFound();
 		}
