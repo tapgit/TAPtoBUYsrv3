@@ -24,38 +24,51 @@ import play.mvc.Controller;
 import play.mvc.Result;
 
 public class BidController extends Controller {
-	
-	public static Result placeBid(){
-//		ArrayList<Product> allItems = Test.getProductList();
-//		JsonNode json = request().body().asJson();
-//		if(json == null) {
-//			return badRequest("Expecting Json data");//400
-//		} 
-//		else{
-//			Bid newBid = new Bid(json.get("user_id").getIntValue(), json.get("product_id").getIntValue(), 
-//					json.get("amount").getDoubleValue());
-//
-//			if(newBid.getUser_id()!=0){
-//				return notFound("User not found");//404
-//			}
-//			else if(!(newBid.getProduct_id() >=0 && newBid.getProduct_id() < 6)){
-//				return notFound("Product not found");//404
-//			}
-//			else if(!(allItems.get(newBid.getProduct_id()) instanceof ProductForAuction)){
-//				return badRequest("Cannot place bid on this item");//400
-//			}
-//			else {//item is an auction product
-//				ProductForAuction product = (ProductForAuction) allItems.get(newBid.getProduct_id());
-//				if(newBid.getAmount() <= product.getCurrentBidPrice()){
-//					return badRequest("Cannot place that amount on the item");
-//				}
-//				else{
-//					//place bid
-//					return ok("Bid has been placed");//200
-//				}	
-//			}
-//		}
-		return ok();
+	//DONE
+	public static Result placeBid(int userId, int productId, double amount){
+			try{
+				Class.forName(Manager.driver);
+				Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
+				Statement statement = connection.createStatement();
+				ProductController.updateItemsAvailability();
+				//Get the highest bid amount on this item:
+				ResultSet rset = statement.executeQuery("select bidid, bid_amount " +
+						"from bid natural join item " +
+						"where iid = "+productId+" and winningbid = true and available = true;");
+				if(rset.next()){//if the item is avaiable
+					int currentBidPrice = rset.getInt("bid_amount");
+					int bidId = rset.getInt("bidid");
+					if(amount<=currentBidPrice){
+						connection.close();
+						return badRequest("Invalid Amount");//400
+					}
+					else{
+						//Place Bid => 1) Update row with this bidid(el q estaba ganando) to winningbid=false
+						//			   2) Add this new bid 
+						//			   3) Update current_bid_price and total_bids from this item_for_auction
+						statement.executeUpdate("update bid set winningbid = false where bidid = " + bidId + ";" + 
+												"insert into bid(bidid,bid_amount,bid_date,winningBid,iId,uid) " +
+												"values (DEFAULT,"+amount+",current_timestamp,true,"+productId+","+userId+");");
+						rset = statement.executeQuery("select count(*) as total_bids from bid where iid = "+productId+";");
+						int totalBids = 1;
+						if(rset.next()){
+							totalBids = rset.getInt("total_bids");
+						}
+						statement.executeUpdate("update item_for_auction set (current_bid_price,total_bids) = ("+amount+","+totalBids+") where iid = " + productId + ";");
+						connection.close();
+						return ok();//200
+					}
+				}
+				else{//Auction ended (item not avaiable)
+					connection.close();
+					return notFound("Auction Ended");//404
+				}
+			}
+			catch (Exception e) {
+				Logger.info("EXCEPTION ON MY PLACE BID");
+				e.printStackTrace();
+				return internalServerError();//500
+			}
 	}
 	//DONE
 	public static Result getMyBiddings(int userId){
@@ -63,13 +76,14 @@ public class BidController extends Controller {
 			Class.forName(Manager.driver);
 			Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
 			Statement statement = connection.createStatement();
-			ResultSet rset = statement.executeQuery("select iid,ititle,ishipping_price,total_bids,current_bid_price,winningbid, " +
-													"to_char(istart_sale_date + itime_duration - current_timestamp,'DD') as days,to_char(istart_sale_date + itime_duration - current_timestamp,'HH24') as hours, " + 
+			ProductController.updateItemsAvailability();
+			ResultSet rset = statement.executeQuery("select iid,ititle,ishipping_price,total_bids,bid_amount,winningbid, " +
+													"to_char(istart_sale_date + itime_duration - current_timestamp,'DD') as days,to_char(istart_sale_date + itime_duration - current_timestamp,'HH24') as hours, " +
 													"to_char(istart_sale_date + itime_duration - current_timestamp,'MI') as minutes, to_char(istart_sale_date + itime_duration - current_timestamp,'SS') as seconds, " +
 													"username,avg(stars) " +
-													"from item natural join item_for_auction natural join users natural left outer join ranks as rnk(b_uid,uid,stars) join bid using(iid) " +
-													"where bid.uid = " + userId + " " +
-													"group by iid,ititle,ishipping_price,total_bids,current_bid_price,winningbid,username;");
+													"from item natural join item_for_auction natural join users natural join ranks as rnk(b_uid,uid,stars) join bid using(iid) " +
+													"where bid.uid = "+userId+" and (iid,bid_amount) in (select iid, max(bid_amount) from bid where bid.uid = "+userId+" group by iid) " +
+													"group by iid,ititle,ishipping_price,total_bids,bid_amount,winningbid,username");
 			
 			ObjectNode respJson = Json.newObject();
 			ArrayNode array = respJson.arrayNode();
@@ -90,7 +104,7 @@ public class BidController extends Controller {
 				}
 				item = new MyBiddingsProduct(rset.getInt("iid"), rset.getString("ititle"), timeRemaining, rset.getDouble("ishipping_price"), 
 						Manager.andrScaledImgDir + "img" + rset.getInt("iid") +".jpg", rset.getString("username"), rset.getDouble("avg"), 
-						-1, rset.getDouble("current_bid_price"), rset.getInt("total_bids"),rset.getBoolean("winningbid"));
+						-1, rset.getDouble("bid_amount"), rset.getInt("total_bids"),rset.getBoolean("winningbid"));
 				
 				itemJson.putPOJO("item", Json.toJson(item));
 				array.add(itemJson);

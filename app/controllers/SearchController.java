@@ -26,7 +26,7 @@ public class SearchController extends Controller {
 	public static Result getSearchResultsAll(int catId, int orderById){
 		return getSearchResults(catId, orderById, "");
 	}
-	//DONE
+	//DONE with available
 	public static Result getSearchResults(int catId, int orderById, String searchString){
 		searchString = searchString.replaceAll("%20"," ");//replace white spaces by %20
 		//Specify in which way items will be ordered
@@ -42,6 +42,7 @@ public class SearchController extends Controller {
 			Class.forName(Manager.driver);
 			Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
 			Statement statement = connection.createStatement();
+			ProductController.updateItemsAvailability();
 			String whereClause = "where results.ititle ilike '%" + searchString + "%' ";
 			if(catId != -1)//search is by categories
 				whereClause = "where results.cat_id = " + catId + " ";
@@ -50,12 +51,14 @@ public class SearchController extends Controller {
 					"to_char(istart_sale_date + itime_duration - current_timestamp,'MI') as minutes, to_char(istart_sale_date + itime_duration - current_timestamp,'SS') as seconds, " + 
 					"username,avg(stars) " +
 					"from item natural join item_for_sale natural join item_info natural join users natural left outer join ranks as rnk(b_uid,uid,stars) " +
+					"where item.available = true " +
 					"group by iid,ititle,ishipping_price,instant_price,brand,cat_id,username " + 
 					"union " + 
 					"select iid,ititle,ishipping_price,total_bids,current_bid_price as price,brand,cat_id,to_char(istart_sale_date + itime_duration - current_timestamp,'DD') as days,to_char(istart_sale_date + itime_duration - current_timestamp,'HH24') as hours, " +
 					"to_char(istart_sale_date + itime_duration - current_timestamp,'MI') as minutes, to_char(istart_sale_date + itime_duration - current_timestamp,'SS') as seconds, " +
 					"username,avg(stars) " +
 					"from item natural join item_for_auction natural join item_info natural join users natural left outer join ranks as rnk(b_uid,uid,stars) " +
+					"where item.available = true " +
 					"group by iid,ititle,ishipping_price,total_bids,current_bid_price,brand,cat_id,username) as results " +
 					whereClause +  
 					"order by results." + orderByStr + ";");
