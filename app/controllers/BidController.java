@@ -82,7 +82,7 @@ public class BidController extends Controller {
 													"to_char(istart_sale_date + itime_duration - current_timestamp,'MI') as minutes, to_char(istart_sale_date + itime_duration - current_timestamp,'SS') as seconds, " +
 													"username,avg(stars) " +
 													"from item natural join item_for_auction natural join users natural join ranks as rnk(b_uid,uid,stars) join bid using(iid) " +
-													"where bid.uid = "+userId+" and (iid,bid_amount) in (select iid, max(bid_amount) from bid where bid.uid = "+userId+" group by iid) " +
+													"where item.available = true and bid.uid = "+userId+" and (iid,bid_amount) in (select iid, max(bid_amount) from bid where bid.uid = "+userId+" group by iid) " +
 													"group by iid,ititle,ishipping_price,total_bids,bid_amount,winningbid,username");
 			
 			ObjectNode respJson = Json.newObject();

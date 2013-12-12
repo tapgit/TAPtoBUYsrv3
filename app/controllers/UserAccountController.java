@@ -60,7 +60,20 @@ public class UserAccountController extends Controller {
 							"where username = '"+username+"' and pass = '" + password +"';");
 					if(rset.next()){
 						respJson.put("admin", false);
-						respJson.put("id", rset.getInt(1));
+						int userId =rset.getInt(1);
+						respJson.put("id", userId);
+						//Get won bid
+						
+						ArrayNode array = respJson.arrayNode();
+						ObjectNode tmpJson = Json.newObject();
+						
+						rset = statement.executeQuery("select iid from bid natural join item where uid = "+ userId +" and winningbid = true and item.available = true;");
+						while(rset.next()){
+							tmpJson.put("iid", rset.getInt("iid"));
+							array.add(tmpJson);
+						}
+						respJson.put("wonBids",array);
+						
 						connection.close();
 						return ok(respJson);//200 (send client the userId of the user that's being signed in)
 					}
