@@ -45,10 +45,7 @@ import play.mvc.Result;
 
 public class ProductController extends Controller {
 
-	private static final int IMG_HEIGHT = 102;
-	private static final int IMG_WIDTH = 90;
 	//DONE
-	@SuppressWarnings("resource")
 	public static Result getProductInfo(int productId){
 		try{
 			Class.forName(Manager.driver);
@@ -124,15 +121,18 @@ public class ProductController extends Controller {
 			Class.forName(Manager.driver);
 			Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
 			Statement statement = connection.createStatement();
+			ProductController.updateItemsAvailability();
 			ResultSet rset = statement.executeQuery("select * " +
 					"from (select iid,ititle,ishipping_price,remaining_quantity as num1,instant_price as price,uid,false as forBid,to_char(istart_sale_date + itime_duration - current_timestamp,'DD') as days,to_char(istart_sale_date + itime_duration - current_timestamp,'HH24') as hours, " +
 					"to_char(istart_sale_date + itime_duration - current_timestamp,'MI') as minutes, to_char(istart_sale_date + itime_duration - current_timestamp,'SS') as seconds " +
 					"from item natural join item_for_sale " + 
+					"where item.available = true " +
 					"group by iid,ititle,ishipping_price,remaining_quantity,instant_price,uid " +
 					"union " + 
 					"select iid,ititle,ishipping_price,total_bids as num1,current_bid_price as price,uid,true as forBid,to_char(istart_sale_date + itime_duration - current_timestamp,'DD') as days,to_char(istart_sale_date + itime_duration - current_timestamp,'HH24') as hours, " +
 					"to_char(istart_sale_date + itime_duration - current_timestamp,'MI') as minutes, to_char(istart_sale_date + itime_duration - current_timestamp,'SS') as seconds " +
 					"from item natural join item_for_auction " +
+					"where item.available = true " + 
 					"group by iid,ititle,ishipping_price,total_bids,current_bid_price,uid) as results " +
 					"where results.uid = " + userId + ";");
 
@@ -273,16 +273,19 @@ public class ProductController extends Controller {
 	}
 	public static Result quitFromSelling(int userId, int productId){ //Includes items for sale and items in auctions
 		Logger.info("user ID = " + userId + " product Id to remove = " + productId);
-		//		if(userId != 16){
-		//			return notFound("No cart found related to that user id");//404
-		//		}
-		//		else if(!(productId >=0 && productId < 6)){
-		//			return notFound("Product not found");//404
-		//		}
-		//		else{
-		//Quit from sale
-		return noContent();//204 (product removed from sale successfully)
-		//}
+		try{
+			Class.forName(Manager.driver);
+			Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
+			Statement statement = connection.createStatement();
+			statement.executeUpdate("update item set available = false where iid = " + productId + ";");
+			connection.close();
+			return noContent();//204 (product removed from sale successfully)
+		}
+		catch (Exception e) {
+			Logger.info("EXCEPTION ON QUIT FROM SELLING");
+			e.printStackTrace();
+			return notFound();
+		}
 	}
 
 	//DONE
@@ -375,8 +378,97 @@ public class ProductController extends Controller {
 			}
 		}
 	}
-	public static Result placeOrder(int userId){
+	public static Result placeBuyNowOrder(int userId){
+		JsonNode json = request().body().asJson();
+		if(json == null) {
+			return badRequest("Expecting Json data");//400
+		} 
+		else {
+			try{
+				Logger.info(json.toString());
+				JSONObject jsonObj = new JSONObject(json.toString());
+				int shipAddrId = jsonObj.getInt("shippingAddressId");
+				String creditCardNum = jsonObj.getString("creditCardNum");
+				JSONArray array = (jsonObj).getJSONArray("productIdsToBuy");
+				if(array.length()==0){
+					return badRequest("Expecting productlist");
+				}
+				else{
+					Class.forName(Manager.driver);
+					Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
+					Statement statement = connection.createStatement();
+					ProductController.updateItemsAvailability();
+					//Get creditcard id
+					ResultSet rset = statement.executeQuery("select crCard_Id from credit_card where sec_number = '"+creditCardNum+"' and uid = "+userId+";");
+					rset.next();
+					int crCardId = rset.getInt("crCard_Id");
+					//Create BuyNow Order and get its id
+					rset = statement.executeQuery("insert into buyNow_order(buyNow_order_id,buyNow_order_date,buyer_uId,shipAddr_Id,crCard_Id) " +
+							"values(DEFAULT,current_timestamp,"+userId+","+shipAddrId+","+crCardId+") " +
+							"returning buyNow_order_id;");
+					rset.next();
+					int last_buyNow_order_id = rset.getInt("buyNow_order_id");
+					//Add to buynow_order_items all the items within the order
+					for(int i=0;i<array.length();i++){
+						jsonObj = array.getJSONObject(i);
+						int productId = jsonObj.getInt("productId");
+						int quantity = jsonObj.getInt("quantity");
+						double totalPrice = jsonObj.getDouble("price") * quantity;
+						double shippingPrice = jsonObj.getDouble("shippingPrice");//////////////////////////
+						rset = statement.executeQuery("select uid,payid,available,remaining_quantity " +
+								"from item natural join item_for_sale,paypal " +
+								"where item_for_sale.uid = paypal.seller_uId and iid = "+productId+";");
+						rset.next();
+						int sellerId = rset.getInt("uid");
+						int payid = rset.getInt("payid");
+						int remainingQuantity = rset.getInt("remaining_quantity");
+						if(rset.getBoolean("available")){//Buy item
+							statement.executeUpdate("insert into seller_buynow_order(seller_id,buynow_order_id,payId) " +
+									"values("+sellerId+","+last_buyNow_order_id+","+payid+");" +
+											"insert into buyNow_order_items(buyNow_order_id,iId,items_price,shipping_price,quantity) " +
+											"values("+last_buyNow_order_id+","+productId+","+totalPrice+","+shippingPrice+","+quantity+");" +
+													"update item set remaining_quantity = " + (remainingQuantity - quantity) + " where iid = "+productId+";");
+						}
+						else{
+							connection.close();
+							return notFound("Product " + productId + " is no longer on sale");//404
+						}
+					}
+					return ok("Order processed successfully");
+				}
+			}
+			catch (Exception e) {
+				Logger.info("EXCEPTION ON BUY NOW ORDER");
+				e.printStackTrace();
+				return internalServerError();
+			}
+		}
+	}
+	
+	public static Result placeAuctionOrder(int userId){
 		return TODO;
+	}
+	
+	public static void updateItemsAvailability(){
+		try{
+			Class.forName(Manager.driver);
+			Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
+			Statement statement = connection.createStatement();
+//			statement.executeUpdate("update item set available = false " +
+//					"where cast(to_char(istart_sale_date + itime_duration - current_timestamp,'DD') as int) <= 0 and cast(to_char(istart_sale_date + itime_duration - current_timestamp,'HH24') as int) <= 0 and " +
+//					"cast(to_char(istart_sale_date + itime_duration - current_timestamp,'MI') as int) <= 0 and cast(to_char(istart_sale_date + itime_duration - current_timestamp,'SS') as int) <= 0;");
+			
+			statement.executeUpdate("update item set available = false " +
+					"where cast(to_char(istart_sale_date + itime_duration - current_timestamp,'DD') as int) <= 0 and cast(to_char(istart_sale_date + itime_duration - current_timestamp,'HH24') as int) <= 0 and " +
+					"cast(to_char(istart_sale_date + itime_duration - current_timestamp,'MI') as int) <= 0 and cast(to_char(istart_sale_date + itime_duration - current_timestamp,'SS') as int) <= 0 " +
+					"or item.remaining_quantity <= 0");
+			connection.close();
+		}
+		catch (Exception e) {
+			Logger.info("EXCEPTION WHILE UPDATING ITEMS AVAILABILITY");
+			e.printStackTrace();
+		}
+		
 	}
 
 }

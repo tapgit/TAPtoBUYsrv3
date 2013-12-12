@@ -43,10 +43,12 @@ GET		/orders/:orderId/:forBid/:sold						controllers.Application.getOrderInfo(or
 
 #GET	/buynow/:productId							     	controllers.ProductController.buyNow(productId: Integer)
 
-POST	/placeorder/:userId									controllers.ProductController.placeOrder(userId: Integer)
+POST	/placeBuyNowOrder/:userId							controllers.ProductController.placeBuyNowOrder(userId: Integer)
+POST	/placeAuctionOrder/:userId							controllers.ProductController.placeAuctionOrder(userId: Integer)
+
 POST	/buynow/:userId										controllers.ProductController.buyNow(userId: Integer)
 
-POST 	/placeBid											controllers.BidController.placeBid(bidPrice: String)
+POST 	/placebid/:userId/:productId/:amount				controllers.BidController.placeBid(userId:Integer, productId:Integer, amount: Double)
 
 GET		/mybiddings/:userId									controllers.BidController.getMyBiddings(userId: Integer)
 

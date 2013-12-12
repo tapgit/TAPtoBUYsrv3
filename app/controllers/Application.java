@@ -96,8 +96,8 @@ public class Application extends Controller {
 
 			//Buscar los de buynow que he comprado
 			rset = statement.executeQuery("select iid,buynow_order_id,ititle,items_price,shipping_price,username " + 
-					"from seller_buynow_order natural join buynow_order natural join buynow_order_items join item using(iid) natural join item_for_sale natural join users " +
-					"where buyer_uid = " + userId +";");
+					"from seller_buynow_order natural join buynow_order natural join buynow_order_items join item using(iid) natural join item_for_sale, users " +
+					"where item_for_sale.uid = seller_buynow_order.seller_id and item_for_sale.uid = users.uid and buynow_order.buyer_uid = 17;");
 			while(rset.next()){
 				itemJson = Json.newObject();
 				item = new MyHistoryProductForSale(rset.getInt("iid"), rset.getInt("buynow_order_id"), rset.getString("ititle"), 
@@ -118,7 +118,7 @@ public class Application extends Controller {
 		}
 	}
 
-	//IN Progress....
+	//DONE
 	public static Result getOrderInfo(int orderId, boolean forBid, boolean sold){
 		try{
 			Class.forName(Manager.driver);

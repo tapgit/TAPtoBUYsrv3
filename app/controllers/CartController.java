@@ -28,13 +28,14 @@ public class CartController extends Controller {
 			Class.forName(Manager.driver);
 			Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
 			Statement statement = connection.createStatement();
+			ProductController.updateItemsAvailability();
 			ObjectNode respJson = Json.newObject();
 			ArrayNode array = respJson.arrayNode();
 			ObjectNode itemJson = null;
 			ProductForSale item = null;
 			ResultSet rset = statement.executeQuery("select iid,ititle,instant_price,ishipping_price,username,avg(stars) " +
 													"from item natural join item_for_sale natural join users natural left outer join ranks as rnk(b_uid,uid,stars) " +
-													"where iid in (select iid from user_cart_item where uid = " + userId + ") " + 
+													"where iid in (select iid from user_cart_item where uid = " + userId + " and user_cart_item.available = true) and item.available = true " + 
 													"group by iid,ititle,instant_price,ishipping_price,username;"); 
 			while(rset.next()){
 				itemJson = Json.newObject();
@@ -57,37 +58,58 @@ public class CartController extends Controller {
 	
 	
 	public static Result addItemToCart(int userId, int productId){
-		JsonNode json = request().body().asJson();
-		if(json == null) {
-			return badRequest("Expecting Json data");//400
-		} 
-		else {
-			if(userId != 16){
-				return notFound("No cart found related to that user id");//404
+		try{
+			Class.forName(Manager.driver);
+			Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
+			Statement statement = connection.createStatement();
+			ProductController.updateItemsAvailability();
+			
+			ResultSet rset = statement.executeQuery("select iid from item natural join item_for_sale where iid = "+productId+" and item.available = true;");
+			if(rset.next()){//if the item is avaiable
+				rset = statement.executeQuery("select available from user_cart_item where uid = "+userId+" and iid = "+productId+";");
+				if(rset.next()){//if has been or is currently on this cart
+					if(rset.getBoolean("available")){
+						connection.close();
+						return badRequest("Item already on cart");//400
+					}
+					else{//add to cart (update current row)
+						statement.executeUpdate("update user_cart_item set available = true where uid = "+userId+" and iid = "+productId+";");
+						connection.close();
+						return ok();//200
+					}
+				}
+				else{//add to cart (create new row)
+					statement.executeUpdate("insert into user_cart_item(uid,iid,available) values ("+userId+","+productId+",true);");
+					connection.close();
+					return ok();//200
+				}
 			}
-			else if(!(productId >=0 && productId < 6)){
-				return notFound("Product not found");//404
+			else{//Time ended or item sold (item not avaiable)
+				connection.close();
+				return notFound("Ended Sale");//404
 			}
-			else{
-				//Add item to cart
-				
-				return ok();//200 (item was added to cart successfully)
-			}
+		}
+		catch (Exception e) {
+			Logger.info("EXCEPTION ON MY PLACE BID");
+			e.printStackTrace();
+			return internalServerError();//500
 		}
 	}
 	public static Result removeItemFromCart(int userId, int productId){
-			if(userId != 16){
-				return notFound("No cart found related to that user id");//404
-			}
-			else if(!(productId >=0 && productId < 6)){
-				return notFound("Product not found");//404
-			}
-			else{
-				//Delete item from cart
-				
-				return noContent();//204 (item removed from cart successfully)
-			}
+		Logger.info("user ID = " + userId + " product Id to remove = " + productId);
+		try{
+			Class.forName(Manager.driver);
+			Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
+			Statement statement = connection.createStatement();
+			statement.executeUpdate("update user_cart_item set available = false where uid = "+userId+" and iid = "+productId+";");
+			connection.close();
+			return noContent();//204 (product removed from cart successfully)
 		}
-	
+		catch (Exception e) {
+			Logger.info("EXCEPTION ON REMOVE ITEM FROM CART");
+			e.printStackTrace();
+			return internalServerError();
+		}
+	}
 	
 }
