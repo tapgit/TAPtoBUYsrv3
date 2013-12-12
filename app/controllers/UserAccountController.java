@@ -40,7 +40,7 @@ public class UserAccountController extends Controller {
 				Class.forName(Manager.driver);
 				Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
 				Statement statement = connection.createStatement();
-
+				ProductController.updateItemsAvailability();
 				String username = json.findPath("username").getTextValue();//json.get("username").getTextValue();
 				String password = json.findPath("password").getTextValue();
 				ObjectNode respJson = Json.newObject();
@@ -62,18 +62,19 @@ public class UserAccountController extends Controller {
 						respJson.put("admin", false);
 						int userId =rset.getInt(1);
 						respJson.put("id", userId);
-						//Get won bid
+						//Get won bids
 						
 						ArrayNode array = respJson.arrayNode();
 						ObjectNode tmpJson = Json.newObject();
 						
-						rset = statement.executeQuery("select iid from bid natural join item where uid = "+ userId +" and winningbid = true and item.available = true;");
+						rset = statement.executeQuery("select iid from bid natural join item where uid = "+ userId +" and winningbid = true and item.available = false;");
 						while(rset.next()){
+							tmpJson = Json.newObject();
 							tmpJson.put("iid", rset.getInt("iid"));
 							array.add(tmpJson);
 						}
 						respJson.put("wonBids",array);
-						
+						Logger.info(""+array.toString());
 						connection.close();
 						return ok(respJson);//200 (send client the userId of the user that's being signed in)
 					}

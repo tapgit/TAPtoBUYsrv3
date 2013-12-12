@@ -414,7 +414,7 @@ public class ProductController extends Controller {
 						int productId = jsonObj.getInt("productId");
 						int quantity = jsonObj.getInt("quantity");
 						double totalPrice = jsonObj.getDouble("price") * quantity;
-						double shippingPrice = jsonObj.getDouble("shippingPrice");//////////////////////////
+						double shippingPrice = jsonObj.getDouble("shippingPrice") * quantity;
 						rset = statement.executeQuery("select uid,payid,available,remaining_quantity " +
 								"from item natural join item_for_sale,paypal " +
 								"where item_for_sale.uid = paypal.seller_uId and iid = "+productId+";");
@@ -446,7 +446,63 @@ public class ProductController extends Controller {
 	}
 	
 	public static Result placeAuctionOrder(int userId){
-		return TODO;
+		JsonNode json = request().body().asJson();
+		if(json == null) {
+			return badRequest("Expecting Json data");//400
+		} 
+		else {
+			try{
+				Logger.info(json.toString());
+				JSONObject jsonObj = new JSONObject(json.toString());
+				int shipAddrId = jsonObj.getInt("shippingAddressId");
+				String creditCardNum = jsonObj.getString("creditCardNum");
+				JSONArray array = (jsonObj).getJSONArray("productIdsToBuy");
+				if(array.length()==0){
+					return badRequest("Expecting productlist");
+				}
+				else{
+					Class.forName(Manager.driver);
+					Connection connection = DriverManager.getConnection(Manager.db,Manager.user,Manager.pass);
+					Statement statement = connection.createStatement();
+					ProductController.updateItemsAvailability();
+					//Get creditcard id
+					ResultSet rset = statement.executeQuery("select crCard_Id from credit_card where sec_number = '"+creditCardNum+"' and uid = "+userId+";");
+					rset.next();
+					int crCardId = rset.getInt("crCard_Id");
+
+					//Add to buynow_order_items all the items within the order
+					for(int i=0;i<array.length();i++){
+						jsonObj = array.getJSONObject(i);
+						int productId = jsonObj.getInt("productId");
+						double totalPrice = jsonObj.getDouble("price");
+						double shippingPrice = jsonObj.getDouble("shippingPrice");
+						rset = statement.executeQuery("select uid,payid,available,remaining_quantity " +
+								"from item natural join item_for_auction,paypal " +
+								"where item_for_auction.uid = paypal.seller_uId and iid = "+productId+";");
+						rset.next();
+						int sellerId = rset.getInt("uid");
+						int payid = rset.getInt("payid");
+						int remainingQuantity = rset.getInt("remaining_quantity");
+						if(rset.getBoolean("available")){//Buy item
+							statement.executeUpdate("insert into auction_order(auc_order_id,auc_order_date,buyer_uid,seller_uid,shipAddr_Id,crCard_Id,iId,item_finalprice,shipping_price,payid) " +
+											"values(DEFAULT,current_timestamp,"+userId+","+sellerId+","+shipAddrId+"," + crCardId +","+productId+","+totalPrice+","+shippingPrice+","+payid+"); " +
+											"update item set remaining_quantity = 0 where iid = "+productId+";");
+						}
+						else{
+							connection.close();
+							return notFound("Product " + productId + " is no longer on sale");//404
+						}
+					}
+					Logger.info("aaaa");
+					return ok("Order processed successfully");
+				}
+			}
+			catch (Exception e) {
+				Logger.info("EXCEPTION ON BUY NOW ORDER");
+				e.printStackTrace();
+				return internalServerError();
+			}
+		}
 	}
 	
 	public static void updateItemsAvailability(){
