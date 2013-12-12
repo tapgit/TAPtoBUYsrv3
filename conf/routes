@@ -46,7 +46,7 @@ GET		/orders/:orderId/:forBid/:sold						controllers.Application.getOrderInfo(or
 POST	/placeorder/:userId									controllers.ProductController.placeOrder(userId: Integer)
 POST	/buynow/:userId										controllers.ProductController.buyNow(userId: Integer)
 
-POST 	/placeBid											controllers.BidController.placeBid(bidPrice: String)
+POST 	/placeBid											controllers.BidController.placeBid()
 
 GET		/mybiddings/:userId									controllers.BidController.getMyBiddings(userId: Integer)
 
